@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>详情图切片工具</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: rgba(255, 255, 255, .82);
+      --solid-card: #ffffff;
+      --text: #111111;
+      --sub: #737780;
+      --line: rgba(17, 24, 39, .08);
+      --soft: #f5f6f8;
+      --blue: #2563eb;
+      --blue-hover: #1d4ed8;
+      --green: #16a34a;
+      --green-hover: #15803d;
+      --orange: #f97316;
+      --red: #ef4444;
+      --radius: 18px;
+      --shadow: 0 18px 46px rgba(15, 23, 42, .06);
+      --preview-width: 440px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(37, 99, 235, .08), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(22, 163, 74, .07), transparent 26%),
+        linear-gradient(180deg, #fbfcff 0%, var(--bg) 100%);
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .topbar {
+      max-width: 960px;
+      margin: 0 auto 12px;
+      min-height: 74px;
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+      background: rgba(255, 255, 255, .72);
+      border: 1px solid rgba(17, 24, 39, .07);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: rgba(17, 17, 17, .045);
+      color: #171717;
+      border: 1px solid rgba(17, 17, 17, .06);
+    }
+
+    .brand-logo-svg {
+      width: 22px;
+      height: 24px;
+      display: block;
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.25;
+      letter-spacing: -.2px;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 3px;
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tool-title {
+      text-align: right;
+      min-width: 190px;
+    }
+
+    .tool-title strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: -.4px;
+    }
+
+    .tool-title span {
+      display: block;
+      margin-top: 4px;
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .pill {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #047857;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .layout {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(400px, 1fr) 340px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(17, 24, 39, .075);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .preview-card {
+      min-height: 600px;
+    }
+
+    .card-head {
+      height: 46px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .52);
+    }
+
+    .card-head strong {
+      font-size: 14px;
+    }
+
+    .mini-help {
+      color: var(--sub);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .head-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .upload-mini-btn {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      background: #fff;
+      color: #111827;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .15s ease;
+      white-space: nowrap;
+    }
+
+    .upload-mini-btn:hover {
+      border-color: #c0cad8;
+      background: #f8fafc;
+    }
+
+    .preview-area {
+      height: calc(100vh - 98px);
+      min-height: 540px;
+      overflow: auto;
+      padding: 12px;
+      background:
+        linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+    }
+
+    .empty {
+      height: 500px;
+      border: 1.5px dashed rgba(148, 163, 184, .62);
+      border-radius: 16px;
+      background: rgba(255,255,255,.70);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 26px;
+      color: var(--sub);
+      line-height: 1.6;
+      cursor: pointer;
+      transition: .16s ease;
+    }
+
+    .empty:hover,
+    .preview-area.drop-active .empty {
+      border-color: var(--blue);
+      background: #eff6ff;
+    }
+
+    .empty-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      color: #64748b;
+      border: 1px solid #e5e7eb;
+    }
+
+    .empty-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .empty b {
+      display: block;
+      color: var(--text);
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .empty-note {
+      color: var(--sub);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .preview-wrap {
+      display: none;
+      width: min(100%, var(--preview-width));
+      margin: 0 auto;
+    }
+
+
+    .stage {
+      position: relative;
+      background: white;
+      border: 1px solid rgba(17, 24, 39, .075);
+      border-radius: 14px;
+      line-height: 0;
+      box-shadow: 0 16px 34px rgba(15, 23, 42, .10);
+      user-select: none;
+      overflow: visible;
+    }
+
+    #previewImg {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      border-radius: 10px;
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      line-height: normal;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .slice-band {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      background: rgba(15, 23, 42, .018);
+      border-top: 1px solid rgba(148, 163, 184, .14);
+      border-bottom: 1px solid rgba(148, 163, 184, .14);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .cut-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 0;
+      border-top: 1px solid rgba(249, 115, 22, .58);
+      z-index: 4;
+      cursor: ns-resize;
+      filter: none;
+      transition: border-color .15s ease;
+    }
+
+    .cut-line:hover {
+      border-top-color: rgba(249, 115, 22, .95);
+    }
+
+    .cut-line::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -10px;
+      height: 20px;
+    }
+
+    .line-label {
+      position: absolute;
+      left: 8px;
+      top: -12px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .88);
+      border: 1px solid rgba(249, 115, 22, .28);
+      color: #9a3412;
+      font-size: 11px;
+      font-weight: 800;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, .06);
+      white-space: nowrap;
+      pointer-events: auto;
+      opacity: .82;
+      transition: opacity .15s ease, border-color .15s ease;
+    }
+
+    .cut-line:hover .line-label {
+      opacity: 1;
+      border-color: rgba(249, 115, 22, .52);
+    }
+
+    .line-handle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(249, 115, 22, .10);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .line-delete {
+      width: 16px;
+      height: 16px;
+      border: 0;
+      border-radius: 50%;
+      padding: 0;
+      background: rgba(249, 115, 22, .12);
+      color: #9a3412;
+      font-weight: 900;
+      line-height: 16px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .line-delete:hover {
+      background: rgba(249, 115, 22, .22);
+    }
+
+    .side {
+      position: sticky;
+      top: 14px;
+    }
+
+    .panel {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel:last-child {
+      border-bottom: 0;
+    }
+
+    .panel-title {
+      margin-bottom: 9px;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+
+    .meta {
+      display: none;
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .meta-row:last-child {
+      border-bottom: 0;
+    }
+
+    .meta-row span:first-child {
+      color: var(--sub);
+    }
+
+    .meta-row span:last-child {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--sub);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      height: 38px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 0 10px;
+      font-size: 13px;
+      outline: none;
+      background: white;
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    button.btn {
+      height: 40px;
+      border: 0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .btn.primary {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: var(--blue-hover);
+    }
+
+    .btn.green {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .btn.green:hover {
+      background: var(--green-hover);
+    }
+
+    .btn.light {
+      background: #eef2f7;
+      color: #253044;
+    }
+
+    .btn.light:hover {
+      background: #e5e7eb;
+    }
+
+    .btn.red {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .btn.red:hover {
+      background: #fecaca;
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+
+    details.advanced {
+      margin: 10px 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fafafa;
+      overflow: hidden;
+    }
+
+    details.advanced summary {
+      height: 38px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+
+    details.advanced summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.advanced summary::after {
+      content: "展开";
+      color: var(--sub);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    details.advanced[open] summary::after {
+      content: "收起";
+    }
+
+    .advanced-body {
+      padding: 0 10px 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .tip {
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .download-btn {
+      height: 54px;
+      border: 0;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: .15s ease;
+      font-family: inherit;
+    }
+
+    .download-btn span {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .download-btn small {
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      opacity: .72;
+    }
+
+    .download-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .blue-download {
+      background: linear-gradient(180deg, #2f6df4 0%, var(--blue) 100%);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, .18);
+    }
+
+    .blue-download:hover:not(:disabled) {
+      background: linear-gradient(180deg, #2b65df 0%, var(--blue-hover) 100%);
+      transform: translateY(-1px);
+    }
+
+    .green-download {
+      background: linear-gradient(180deg, #19b257 0%, var(--green) 100%);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(22, 163, 74, .16);
+    }
+
+    .green-download:hover:not(:disabled) {
+      background: linear-gradient(180deg, #17a34f 0%, var(--green-hover) 100%);
+      transform: translateY(-1px);
+    }
+
+    .progress {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      color: var(--sub);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      background: var(--blue);
+      transition: width .18s ease;
+    }
+
+    .slice-list {
+      max-height: 255px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding-right: 2px;
+    }
+
+    .slice-item {
+      min-height: 52px;
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .slice-no {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue);
+      background: #eff6ff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .slice-info b {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 12px;
+    }
+
+    .slice-info span {
+      color: var(--sub);
+      font-size: 11px;
+    }
+
+    .status {
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: #4b5563;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status.ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status.bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .footer {
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9999;
+      max-width: min(680px, calc(100vw - 36px));
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(17, 24, 39, .94);
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+      transition: .18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .side {
+        position: static;
+      }
+      .preview-area {
+        height: 620px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 12px;
+      }
+      .topbar {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+        padding: 14px;
+      }
+      .brand {
+        align-items: center;
+      }
+      .brand span {
+        white-space: normal;
+      }
+      .tool-title {
+        text-align: left;
+        min-width: 0;
+      }
+      .layout {
+        gap: 12px;
+      }
+      .grid-2,
+      .btn-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg class="brand-logo-svg" aria-hidden="true" 
+ xmlns="http://www.w3.org/2000/svg"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ viewBox="0 0 2067 2301">
+<path fill-rule="evenodd"  fill="currentColor"
+ d="M2016.359,1795.78 L1150.934,2292.436 C1141.963,2297.586 1131.848,2300.313 1121.694,2300.313 C1089.326,2300.313 1062.992,2274.90 1062.992,2241.873 L1062.992,1223.46 C1062.992,1202.249 1074.229,1182.875 1092.305,1172.483 L1978.571,663.66 C1987.542,657.920 1997.656,655.192 2007.828,655.192 C2040.178,655.192 2066.512,681.406 2066.512,713.622 L2066.512,1708.414 C2066.512,1743.907 2047.295,1777.120 2016.359,1795.78 ZM1582.625,1867.250 C1587.513,1873.872 1594.150,1877.495 1602.275,1878.397 C1610.525,1879.93 1619.519,1876.634 1629.248,1871.47 C1638.734,1865.593 1647.335,1858.75 1655.304,1848.201 C1663.274,1838.330 1669.746,1827.890 1674.713,1816.743 L1674.584,1816.99 L1654.827,1812.16 L1654.578,1812.446 C1650.977,1820.236 1647.120,1826.596 1643.134,1831.463 C1639.151,1836.470 1634.412,1840.481 1629.170,1843.495 C1623.309,1846.865 1618.187,1848.519 1613.936,1848.103 C1609.562,1847.900 1606.185,1845.984 1603.798,1842.208 C1601.412,1838.432 1600.148,1833.152 1600.129,1826.442 C1600.111,1819.592 1601.344,1812.876 1603.696,1806.519 C1606.53,1800.15 1609.410,1794.85 1613.768,1788.862 C1618.1,1783.711 1623.115,1779.344 1628.978,1775.970 C1634.467,1772.816 1639.213,1771.376 1643.89,1771.722 C1646.963,1771.925 1650.471,1773.911 1653.605,1777.830 L1653.977,1777.617 L1674.650,1751.575 L1674.524,1751.218 C1669.759,1744.952 1663.376,1741.617 1655.249,1741.138 C1647.248,1740.592 1638.508,1742.900 1628.900,1748.421 C1619.168,1754.15 1610.192,1762.33 1601.973,1772.194 C1593.878,1782.281 1587.285,1793.501 1582.449,1805.722 C1577.608,1817.942 1575.267,1829.582 1575.301,1840.715 C1575.327,1851.851 1577.729,1860.620 1582.625,1867.250 ZM1343.558,2005.243 C1348.203,2011.865 1354.711,2015.561 1363.87,2016.37 C1371.586,2016.442 1381.326,2013.558 1392.681,2007.33 C1401.167,2002.156 1409.519,1994.925 1417.488,1985.621 C1425.586,1976.103 1432.305,1965.523 1437.773,1953.659 L1437.518,1953.516 L1418.262,1949.575 L1417.887,1950.75 C1414.412,1957.509 1410.555,1964.12 1406.322,1969.309 C1402.87,1974.603 1397.474,1978.680 1392.607,1981.481 C1385.246,1985.715 1379.254,1987.872 1374.505,1987.740 C1369.753,1987.757 1366.124,1985.837 1363.738,1981.918 C1362.251,1979.191 1361.202,1975.701 1360.648,1971.397 L1429.586,1931.771 L1441.559,1924.460 C1441.772,1909.467 1439.611,1898.124 1434.843,1890.572 C1430.197,1882.949 1423.937,1878.970 1416.59,1878.348 C1408.187,1877.869 1399.693,1880.180 1390.334,1885.558 C1379.981,1891.512 1370.750,1899.533 1362.531,1909.547 C1354.315,1919.421 1347.969,1930.358 1343.380,1942.292 C1338.791,1954.222 1336.572,1965.935 1336.606,1977.638 C1336.640,1989.348 1338.917,1998.621 1343.558,2005.243 ZM1214.249,2107.170 L1238.705,2092.684 L1238.668,2080.414 C1240.318,2081.498 1242.109,2082.376 1244.49,2083.37 C1250.805,2085.442 1259.49,2083.852 1268.655,2078.327 C1278.264,2072.806 1286.991,2065.72 1294.834,2055.131 C1302.555,2045.114 1308.649,2034.177 1312.987,2022.247 C1317.329,2010.309 1319.543,1998.886 1319.514,1987.754 C1319.482,1976.617 1317.206,1967.631 1312.814,1960.719 C1308.421,1953.809 1302.285,1949.897 1294.533,1948.925 C1286.655,1948.12 1277.915,1950.180 1268.309,1955.705 C1258.698,1961.229 1250.472,1969.246 1243.753,1979.397 C1241.820,1982.285 1240.45,1985.215 1238.403,1988.184 L1237.853,1925.30 L1213.394,1939.516 L1214.249,2107.170 ZM1285.635,1369.4 L1173.216,1433.627 L1173.321,1470.176 L1212.497,1447.651 L1213.166,1682.190 L1247.105,1662.680 L1246.438,1428.141 L1285.740,1405.550 L1285.635,1369.4 ZM1290.321,1742.159 L1274.847,1751.50 L1274.223,1751.837 L1252.976,1839.120 L1227.683,1778.162 L1201.858,1793.435 L1242.243,1887.327 L1242.741,1887.470 L1262.831,1875.491 L1282.706,1789.571 L1303.756,1852.397 L1323.99,1841.278 L1323.717,1840.495 L1363.184,1700.271 L1337.606,1714.973 L1336.987,1715.760 L1312.743,1804.764 L1290.945,1742.229 L1290.321,1742.159 ZM1397.217,1360.914 C1397.189,1351.777 1395.796,1344.431 1393.32,1338.868 C1390.266,1333.312 1386.505,1329.469 1381.874,1326.980 C1377.117,1324.714 1371.744,1323.941 1365.623,1324.742 C1359.497,1325.546 1353.130,1327.920 1346.519,1331.718 C1339.782,1335.592 1333.423,1340.536 1327.439,1346.690 C1321.336,1352.917 1315.979,1359.858 1311.253,1367.578 C1306.651,1375.372 1302.925,1383.518 1300.202,1392.235 C1297.475,1400.949 1296.4,1409.945 1296.28,1419.81 L1296.479,1578.249 C1296.510,1587.386 1298.26,1594.519 1300.793,1600.78 C1303.557,1605.638 1307.320,1609.624 1311.948,1611.966 C1316.705,1614.382 1322.81,1615.152 1328.204,1614.347 C1334.199,1613.473 1340.566,1611.243 1347.306,1607.368 C1353.917,1603.571 1360.273,1598.484 1366.384,1592.400 C1372.488,1586.173 1377.841,1579.232 1382.569,1571.368 C1387.174,1563.721 1390.898,1555.431 1393.622,1546.714 C1396.347,1538.1 1397.697,1529.218 1397.671,1520.82 L1397.217,1360.914 ZM1468.701,1667.788 C1463.810,1661.162 1457.296,1657.470 1449.46,1656.778 C1440.799,1655.945 1431.933,1658.323 1422.198,1663.921 C1412.590,1669.442 1403.739,1677.246 1395.518,1687.547 C1387.300,1697.704 1380.833,1708.862 1375.997,1721.75 C1371.151,1733.295 1368.691,1745.5 1368.720,1756.145 C1368.752,1766.991 1371.277,1775.837 1376.44,1782.390 C1380.814,1789.85 1387.323,1792.918 1395.573,1793.753 C1403.823,1794.446 1412.815,1792.134 1422.547,1786.543 C1432.281,1780.946 1441.132,1772.998 1449.350,1762.841 C1457.566,1752.540 1464.36,1741.243 1468.874,1729.26 C1473.589,1717.22 1475.931,1705.383 1475.899,1694.529 C1475.868,1683.400 1473.468,1674.484 1468.701,1667.788 ZM1552.586,1589.393 L1552.460,1589.180 L1552.211,1589.180 C1541.108,1595.564 1531.260,1605.89 1522.798,1617.529 C1522.121,1618.505 1521.458,1619.494 1520.808,1620.491 L1520.776,1610.113 L1520.653,1609.896 L1520.401,1609.896 L1496.317,1623.743 L1496.71,1624.29 L1495.945,1624.386 L1496.281,1741.295 L1496.404,1741.508 L1496.656,1741.508 L1520.737,1727.666 L1520.983,1727.379 L1521.112,1727.26 L1520.949,1671.64 C1520.923,1661.931 1522.27,1654.148 1524.259,1647.718 C1526.365,1641.215 1529.724,1635.424 1534.334,1630.487 C1538.944,1625.547 1544.928,1620.966 1552.287,1616.732 L1552.541,1616.445 L1552.662,1616.89 L1552.586,1589.393 ZM1555.66,1844.914 C1555.32,1834.61 1553.260,1825.505 1549.617,1819.306 C1546.103,1813.33 1541.338,1809.620 1535.590,1808.638 C1529.837,1807.652 1523.716,1808.883 1517.102,1812.687 C1506.749,1818.641 1497.403,1827.872 1488.938,1840.460 C1488.217,1841.526 1487.517,1842.610 1486.824,1843.704 L1486.793,1833.110 L1486.418,1832.900 L1462.85,1846.883 L1461.961,1847.386 L1462.675,1964.369 L1487.126,1949.883 L1486.966,1893.925 C1486.940,1884.932 1487.918,1877.75 1490.24,1870.579 C1492.129,1864.75 1494.864,1858.641 1498.352,1854.495 C1501.840,1850.201 1505.955,1846.690 1510.570,1844.37 C1513.814,1842.173 1516.937,1841.379 1519.937,1841.512 C1522.811,1841.718 1525.316,1843.141 1527.322,1845.848 C1529.205,1848.767 1530.219,1853.190 1530.235,1859.187 L1530.796,1925.208 L1555.253,1910.722 L1555.66,1844.914 ZM1658.525,1530.501 L1622.92,1551.728 L1593.977,1597.256 L1593.374,1517.333 L1569.41,1531.323 L1568.921,1531.823 L1569.773,1699.480 L1593.854,1685.638 L1594.226,1684.994 L1594.127,1649.697 L1630.35,1664.837 L1665.844,1643.823 L1604.320,1616.931 L1658.525,1530.501 ZM1740.233,1521.421 L1740.107,1521.64 L1739.860,1521.207 L1670.732,1560.945 L1670.485,1561.85 L1670.362,1561.585 L1670.438,1588.138 L1670.564,1588.491 L1670.811,1588.491 L1739.939,1548.760 L1740.186,1548.473 L1740.309,1547.973 L1740.233,1521.421 ZM1783.274,1713.729 C1783.240,1702.879 1781.470,1694.320 1777.953,1688.47 C1774.311,1681.851 1769.674,1678.365 1763.923,1677.382 C1758.173,1676.400 1751.926,1677.701 1745.315,1681.501 C1734.957,1687.452 1725.610,1696.690 1717.271,1709.201 C1716.506,1710.327 1715.766,1711.466 1715.32,1712.617 L1714.856,1650.966 L1714.484,1651.40 L1690.528,1664.809 L1690.27,1665.526 L1690.405,1796.998 L1690.630,1833.187 L1691.5,1833.110 L1714.961,1819.341 L1715.336,1818.697 L1715.176,1762.739 C1715.152,1753.746 1716.254,1745.820 1718.234,1739.393 C1720.339,1732.893 1723.75,1727.456 1726.560,1723.309 C1730.47,1719.19 1734.165,1715.508 1738.780,1712.855 C1742.24,1710.991 1745.145,1710.194 1748.145,1710.327 C1751.147,1710.463 1753.652,1711.886 1755.529,1714.662 C1757.538,1717.512 1758.427,1722.5 1758.443,1728.5 L1758.757,1794.22 L1759.132,1793.949 L1783.90,1780.180 L1783.460,1779.536 L1783.274,1713.729 ZM1437.434,1747.243 C1433.73,1752.753 1428.88,1757.43 1422.471,1760.274 C1416.731,1763.578 1411.863,1764.942 1407.610,1764.386 C1403.359,1763.970 1400.105,1761.550 1397.718,1757.631 C1395.458,1753.641 1394.194,1748.218 1394.173,1741.508 C1394.155,1734.515 1395.261,1727.732 1397.488,1721.159 C1399.848,1714.515 1403.79,1708.652 1407.314,1703.218 C1411.544,1697.781 1416.531,1693.484 1422.274,1690.187 C1427.886,1686.959 1432.879,1685.515 1437.256,1686.5 C1441.507,1686.564 1444.764,1688.694 1447.24,1692.683 C1449.285,1696.676 1450.428,1702.169 1450.447,1709.162 C1450.465,1715.872 1449.361,1722.655 1447.127,1729.229 C1444.900,1735.802 1441.667,1741.952 1437.434,1747.243 ZM1347.196,1568.543 C1342.328,1571.340 1338.329,1571.777 1335.201,1569.861 C1332.72,1567.938 1330.559,1564.235 1330.546,1558.669 L1330.92,1399.501 C1330.74,1393.935 1331.558,1388.361 1334.668,1383.1 C1337.776,1377.497 1341.762,1373.344 1346.632,1370.546 C1351.496,1367.753 1355.495,1367.312 1358.621,1369.232 C1361.755,1371.8 1363.263,1374.854 1363.281,1380.424 L1363.732,1539.589 C1363.745,1545.155 1362.264,1550.585 1359.156,1556.92 C1356.46,1561.596 1352.57,1565.746 1347.196,1568.543 ZM1250.424,1995.865 C1255.35,1990.215 1260.269,1985.778 1266.384,1982.260 C1271.126,1979.537 1275.620,1978.379 1279.748,1979.156 C1283.750,1979.858 1287.4,1982.274 1289.390,1986.337 C1291.651,1990.470 1292.915,1996.33 1292.936,2003.30 C1292.957,2010.26 1291.727,2016.879 1289.498,2023.596 C1287.143,2030.383 1284.36,2036.313 1279.924,2041.677 C1275.943,2047.114 1271.453,2051.124 1266.589,2053.921 C1260.473,2057.439 1255.229,2059.23 1250.605,2058.677 C1246.103,2058.261 1242.599,2056.131 1240.87,2052.138 C1237.701,2048.79 1236.434,2042.656 1236.416,2035.523 C1236.395,2028.386 1237.625,2021.383 1239.980,2014.596 C1242.460,2007.596 1245.945,2001.446 1250.424,1995.865 ZM1373.826,1924.792 C1378.310,1919.495 1383.796,1914.911 1390.407,1911.110 C1396.150,1907.813 1401.15,1906.442 1405.266,1907.2 C1409.519,1907.418 1412.776,1910.260 1415.168,1915.320 C1415.367,1915.718 1415.553,1916.138 1415.734,1916.568 L1362.298,1947.285 C1362.694,1945.767 1363.129,1944.271 1363.627,1942.806 C1365.985,1936.159 1369.339,1930.86 1373.826,1924.792 ZM1949.239,612.524 L1062.992,1121.938 C1054.76,1127.50 1043.941,1129.756 1033.677,1129.756 C1023.408,1129.756 1013.275,1127.50 1004.361,1121.938 L118.112,612.524 C99.755,601.979 88.799,583.84 88.799,561.968 C88.799,540.863 99.755,521.965 118.112,511.416 L983.463,13.926 C999.38,5.195 1016.345,0.625 1033.677,0.625 C1051.24,0.625 1068.334,5.195 1083.735,13.831 L1949.258,511.416 C1967.617,521.972 1978.571,540.867 1978.571,561.968 C1978.552,583.84 1967.598,601.979 1949.239,612.524 ZM1278.778,565.171 C1273.530,562.150 1267.32,559.640 1259.293,557.877 L870.764,469.367 C824.565,458.825 779.72,485.150 797.505,511.759 L952.362,735.465 C955.443,739.965 959.844,743.738 965.122,746.769 C991.422,761.888 1039.645,758.808 1056.714,736.829 L1111.158,666.178 C1116.838,658.864 1126.879,653.56 1139.548,649.755 L1261.994,618.49 C1299.995,608.185 1305.125,580.315 1278.778,565.171 ZM975.48,1172.483 C993.119,1182.875 1004.361,1202.245 1004.361,1223.46 L1004.361,2241.873 C1004.361,2274.90 978.22,2300.310 945.675,2300.310 C935.503,2300.310 925.391,2297.586 916.420,2292.436 L51.68,1795.127 C20.92,1777.274 0.857,1744.50 0.857,1708.414 L0.857,713.622 C0.857,681.406 27.173,655.192 59.541,655.192 C69.713,655.192 79.828,657.920 88.799,663.66 L975.48,1172.483 Z"/>
+</svg>
+        </div>
+        <div class="brand-copy">
+          <h1>T0工作台</h1>
+          <span>为自己，也为同频的朋友做点顺手工具</span>
+        </div>
+      </div>
+      <div class="tool-title">
+        <strong>详情图切片工具</strong>
+        <span>点击添加切线，一键导出切片</span>
+      </div>
+    </header>
+
+    <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+
+    <main class="layout">
+      <section class="card preview-card">
+        <div class="card-head">
+          <strong>切片预览</strong>
+          <div class="head-actions">
+            <span class="mini-help" id="previewHint">点击上传 / 拖入 / 粘贴</span>
+            <button class="upload-mini-btn" id="uploadTriggerBtn" type="button">上传图片</button>
+          </div>
+        </div>
+        <div class="preview-area" id="previewArea">
+          <div class="empty" id="emptyState" role="button" tabindex="0" title="点击上传图片">
+            <div class="empty-inner">
+              <div class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 16V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M8.5 10.5L12 7l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <b>上传详情图</b>
+              <div class="empty-note">点击上传 / 拖入图片 / Ctrl+V 粘贴</div>
+            </div>
+          </div>
+
+          <div class="preview-wrap" id="previewWrap">
+            <div class="stage" id="stage">
+              <img id="previewImg" alt="详情图预览" />
+              <div id="overlay"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card side">
+        <div class="panel">
+          <div class="panel-title">设置</div>
+
+          <div class="meta" id="metaBox">
+            <div class="meta-row"><span>原图尺寸</span><span id="metaSize">-</span></div>
+            <div class="meta-row"><span>原文件大小</span><span id="metaWeight">-</span></div>
+            <div class="meta-row"><span>当前切片</span><span id="metaSlices">-</span></div>
+          </div>
+
+          <div class="field">
+            <label for="previewWidth">预览大小</label>
+            <input id="previewWidth" type="range" min="320" max="600" step="20" value="440" />
+          </div>
+
+          <div class="btn-row">
+            <button class="btn light" id="undoBtn" type="button">撤销</button>
+            <button class="btn red" id="clearBtn" type="button">清空</button>
+          </div>
+
+          <details class="advanced">
+            <summary>高级设置</summary>
+            <div class="advanced-body">
+              <div class="grid-2" style="margin-top:10px;">
+                <div class="field" style="margin-bottom:0;">
+                  <label for="splitCount">平均切成</label>
+                  <input id="splitCount" type="number" min="2" max="80" value="5" />
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                  <label>&nbsp;</label>
+                  <button class="btn light" id="autoSplitBtn" type="button">应用</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <div class="tip">
+            点击添加切线，拖动细线调整，点 × 删除。
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <span>导出</span>
+            <span class="mini-help" id="sliceCountLabel">0 片</span>
+          </div>
+          <div class="download-grid">
+            <button class="download-btn blue-download" id="exportOriginalBtn" type="button" disabled>
+              <span>原图下载</span>
+              <small>最高质量</small>
+            </button>
+            <button class="download-btn green-download" id="exportBtn" type="button" disabled>
+              <span>压缩下载</span>
+              <small>每个切片200k以内</small>
+            </button>
+          </div>
+          <div class="progress" id="progressWrap">
+            <div class="progress-top">
+              <span id="progressText">处理中...</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="bar"><span id="progressBar"></span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">切片列表</div>
+          <div class="slice-list" id="sliceList">
+            <div class="footer">上传后显示切片信息。</div>
+          </div>
+        </div>
+
+
+      </aside>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const previewImg = document.getElementById('previewImg');
+    const previewArea = document.getElementById('previewArea');
+    const uploadTriggerBtn = document.getElementById('uploadTriggerBtn');
+    const previewHint = document.getElementById('previewHint');
+    const previewWrap = document.getElementById('previewWrap');
+    const emptyState = document.getElementById('emptyState');
+    const overlay = document.getElementById('overlay');
+    const metaBox = document.getElementById('metaBox');
+    const metaSize = document.getElementById('metaSize');
+    const metaWeight = document.getElementById('metaWeight');
+    const metaSlices = document.getElementById('metaSlices');
+    const previewWidth = document.getElementById('previewWidth');
+    const splitCount = document.getElementById('splitCount');
+    const autoSplitBtn = document.getElementById('autoSplitBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const exportOriginalBtn = document.getElementById('exportOriginalBtn');
+    const sliceList = document.getElementById('sliceList');
+    const sliceCountLabel = document.getElementById('sliceCountLabel');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressBar = document.getElementById('progressBar');
+    const toast = document.getElementById('toast');
+
+    let sourceFile = null;
+    let sourceUrl = '';
+    let imgReady = false;
+    let cuts = [];
+    let draggingIndex = null;
+    let dragActive = false;
+    let lastExportInfo = new Map();
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 2100);
+    }
+
+    function bytesToSize(bytes) {
+      if (!Number.isFinite(bytes)) return '-';
+      if (bytes < 1024) return bytes + 'B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+      return (bytes / 1024 / 1024).toFixed(2) + 'MB';
+    }
+
+    function pad2(num) {
+      return String(num).padStart(2, '0');
+    }
+
+    function getScale() {
+      if (!imgReady || !previewImg.naturalHeight) return 1;
+      return previewImg.clientHeight / previewImg.naturalHeight;
+    }
+
+    function clientYToImageY(clientY) {
+      const rect = overlay.getBoundingClientRect();
+      const scale = getScale();
+      return clampCutY((clientY - rect.top) / scale);
+    }
+
+    function clampCutY(y) {
+      const h = previewImg.naturalHeight || 1;
+      return Math.max(1, Math.min(h - 1, Math.round(y)));
+    }
+
+    function normalizeCuts() {
+      const h = previewImg.naturalHeight || 0;
+      const unique = Array.from(new Set(cuts.map(v => Math.round(v))));
+      cuts = unique.filter(v => v > 0 && v < h).sort((a, b) => a - b);
+    }
+
+    function getSegments() {
+      if (!imgReady) return [];
+      normalizeCuts();
+      const points = [0, ...cuts, previewImg.naturalHeight];
+      const segments = [];
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const y = points[i];
+        const next = points[i + 1];
+        const height = next - y;
+        if (height > 0) {
+          segments.push({
+            index: i + 1,
+            y,
+            height,
+            width: previewImg.naturalWidth
+          });
+        }
+      }
+
+      return segments;
+    }
+
+    function renderOverlay() {
+      overlay.innerHTML = '';
+      if (!imgReady) return;
+
+      const scale = getScale();
+      const segments = getSegments();
+
+      segments.forEach((seg, index) => {
+        const band = document.createElement('div');
+        band.className = 'slice-band';
+        band.style.top = `${seg.y * scale}px`;
+        band.style.height = `${seg.height * scale}px`;
+        band.style.opacity = index % 2 === 0 ? '.95' : '.5';
+        overlay.appendChild(band);
+      });
+
+      cuts.forEach((y, index) => {
+        const line = document.createElement('div');
+        line.className = 'cut-line';
+        line.style.top = `${y * scale}px`;
+        line.dataset.index = String(index);
+
+        const label = document.createElement('div');
+        label.className = 'line-label';
+        label.innerHTML = `<span class="line-handle">↕</span><span>${Math.round(y)}px</span>`;
+
+        const del = document.createElement('button');
+        del.className = 'line-delete';
+        del.type = 'button';
+        del.textContent = '×';
+        del.title = '删除这条切线';
+        del.addEventListener('pointerdown', e => e.stopPropagation());
+        del.addEventListener('click', e => {
+          e.stopPropagation();
+          cuts.splice(index, 1);
+          lastExportInfo.clear();
+          updateAll();
+        });
+
+        label.appendChild(del);
+        line.appendChild(label);
+        overlay.appendChild(line);
+      });
+    }
+
+    function renderSliceList() {
+      const segments = getSegments();
+      sliceCountLabel.textContent = segments.length ? `${segments.length} 片` : '0 片';
+      metaSlices.textContent = segments.length ? `${segments.length} 片` : '-';
+      exportBtn.disabled = !imgReady || segments.length === 0;
+      exportOriginalBtn.disabled = !imgReady || segments.length === 0;
+
+      if (!imgReady) {
+        sliceList.innerHTML = '<div class="footer">上传后显示切片信息。</div>';
+        return;
+      }
+
+      sliceList.innerHTML = '';
+
+      segments.forEach(seg => {
+        const info = lastExportInfo.get(seg.index);
+        const statusClass = info ? (info.ok ? 'ok' : 'bad') : '';
+        const statusText = info ? (info.ok ? bytesToSize(info.size) : `${bytesToSize(info.size)} 超出`) : '待导出';
+
+        const item = document.createElement('div');
+        item.className = 'slice-item';
+        item.innerHTML = `
+          <div class="slice-no">${pad2(seg.index)}</div>
+          <div class="slice-info">
+            <b>${seg.width} × ${seg.height}px</b>
+            <span>${seg.y}px - ${seg.y + seg.height}px</span>
+          </div>
+          <div class="status ${statusClass}">${statusText}</div>
+        `;
+        sliceList.appendChild(item);
+      });
+    }
+
+    function updateMeta() {
+      if (!imgReady || !sourceFile) return;
+      metaBox.style.display = 'block';
+      metaSize.textContent = `${previewImg.naturalWidth} × ${previewImg.naturalHeight}px`;
+      metaWeight.textContent = bytesToSize(sourceFile.size);
+      metaSlices.textContent = `${getSegments().length} 片`;
+    }
+
+    function updateAll() {
+      normalizeCuts();
+      renderOverlay();
+      renderSliceList();
+      updateMeta();
+    }
+
+    function beginDrag(index, pointerId, captureEl) {
+      draggingIndex = index;
+      dragActive = true;
+      try { captureEl.setPointerCapture(pointerId); } catch (err) {}
+    }
+
+    function moveCurrentLine(clientY) {
+      if (!dragActive || draggingIndex === null || !imgReady) return;
+      cuts[draggingIndex] = clientYToImageY(clientY);
+      lastExportInfo.clear();
+      updateAll();
+    }
+
+    function endDrag(pointerId, captureEl) {
+      if (!dragActive) return;
+      dragActive = false;
+      draggingIndex = null;
+      try { captureEl.releasePointerCapture(pointerId); } catch (err) {}
+      updateAll();
+    }
+
+    function loadImageFile(file, successText = '上传成功：点击图片添加切线') {
+      if (!file) return;
+
+      if (!file.type || !file.type.startsWith('image/')) {
+        showToast('请上传图片文件');
+        return;
+      }
+
+      sourceFile = file;
+      if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+      sourceUrl = URL.createObjectURL(file);
+
+      imgReady = false;
+      cuts = [];
+      lastExportInfo.clear();
+      progressWrap.style.display = 'none';
+
+      previewImg.onload = () => {
+        imgReady = true;
+        emptyState.style.display = 'none';
+        previewWrap.style.display = 'block';
+        previewHint.textContent = '点哪里，就从哪里切';
+        requestAnimationFrame(updateAll);
+        showToast(successText);
+      };
+
+      previewImg.src = sourceUrl;
+    }
+
+    fileInput.addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      loadImageFile(file);
+      fileInput.value = '';
+    });
+
+    uploadTriggerBtn.addEventListener('click', () => fileInput.click());
+    emptyState.addEventListener('click', () => fileInput.click());
+    emptyState.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+      previewArea.addEventListener(name, event => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+    });
+
+    ['dragenter', 'dragover'].forEach(name => {
+      previewArea.addEventListener(name, () => {
+        previewArea.classList.add('drop-active');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+      previewArea.addEventListener(name, () => {
+        previewArea.classList.remove('drop-active');
+      });
+    });
+
+    previewArea.addEventListener('drop', event => {
+      const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+      if (!file) return;
+      loadImageFile(file, '上传成功：点击图片添加切线');
+    });
+
+    document.addEventListener('paste', event => {
+      const items = event.clipboardData && event.clipboardData.items ? Array.from(event.clipboardData.items) : [];
+      const imageItem = items.find(item => item.type && item.type.startsWith('image/'));
+      if (!imageItem) return;
+      const file = imageItem.getAsFile();
+      if (!file) return;
+      loadImageFile(file, '已粘贴图片：点击图片添加切线');
+    });
+
+
+    overlay.addEventListener('pointerdown', event => {
+      if (!imgReady) return;
+
+      const line = event.target.closest('.cut-line');
+
+      if (line) {
+        event.preventDefault();
+        beginDrag(Number(line.dataset.index), event.pointerId, overlay);
+        return;
+      }
+
+      const y = clientYToImageY(event.clientY);
+      cuts.push(y);
+      lastExportInfo.clear();
+      updateAll();
+      showToast('已添加切线，可继续拖动微调');
+    });
+
+    overlay.addEventListener('pointermove', event => {
+      moveCurrentLine(event.clientY);
+    });
+
+    overlay.addEventListener('pointerup', event => endDrag(event.pointerId, overlay));
+    overlay.addEventListener('pointercancel', event => endDrag(event.pointerId, overlay));
+
+    previewWidth.addEventListener('input', () => {
+      document.documentElement.style.setProperty('--preview-width', `${previewWidth.value}px`);
+      if (imgReady) requestAnimationFrame(renderOverlay);
+    });
+
+    window.addEventListener('resize', () => {
+      if (imgReady) renderOverlay();
+    });
+
+    autoSplitBtn.addEventListener('click', () => {
+      if (!imgReady) {
+        showToast('请先上传详情图');
+        return;
+      }
+
+      const n = Math.max(2, Math.min(80, Number(splitCount.value) || 2));
+      const h = previewImg.naturalHeight;
+      cuts = [];
+
+      for (let i = 1; i < n; i++) {
+        cuts.push(Math.round(h * i / n));
+      }
+
+      lastExportInfo.clear();
+      updateAll();
+      showToast(`已平均切成 ${n} 片`);
+    });
+
+    undoBtn.addEventListener('click', () => {
+      if (!cuts.length) return;
+      cuts.pop();
+      lastExportInfo.clear();
+      updateAll();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (!cuts.length) return;
+      cuts = [];
+      lastExportInfo.clear();
+      updateAll();
+      showToast('已清空切线');
+    });
+
+
+
+    function canvasToBlob(canvas, type, quality) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => {
+          if (!blob) {
+            reject(new Error('图片压缩失败，浏览器可能不支持当前格式'));
+          } else {
+            resolve(blob);
+          }
+        }, type, quality);
+      });
+    }
+
+    async function compressSegment(seg, type, maxBytes) {
+      if (
+        sourceFile &&
+        sourceFile.type === 'image/jpeg' &&
+        sourceFile.size <= maxBytes &&
+        seg.y === 0 &&
+        seg.width === previewImg.naturalWidth &&
+        seg.height === previewImg.naturalHeight
+      ) {
+        return { blob: sourceFile, quality: 1, ok: true, skippedCompression: true };
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = seg.width;
+      canvas.height = seg.height;
+
+      const ctx = canvas.getContext('2d', { alpha: type !== 'image/jpeg' });
+
+      if (type === 'image/jpeg') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.drawImage(
+        previewImg,
+        0, seg.y, seg.width, seg.height,
+        0, 0, seg.width, seg.height
+      );
+
+      const originalLikeBlob = await canvasToBlob(canvas, type, 1);
+
+      if (originalLikeBlob.size <= maxBytes) {
+        return { blob: originalLikeBlob, quality: 1, ok: true, skippedCompression: true };
+      }
+
+      let low = .08;
+      let high = 1;
+      let best = await canvasToBlob(canvas, type, low);
+
+      if (best.size > maxBytes) {
+        return { blob: best, quality: low, ok: false, skippedCompression: false };
+      }
+
+      for (let i = 0; i < 12; i++) {
+        const mid = (low + high) / 2;
+        const blob = await canvasToBlob(canvas, type, mid);
+
+        if (blob.size <= maxBytes) {
+          best = blob;
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+
+      return { blob: best, quality: low, ok: true, skippedCompression: false };
+    }
+
+    async function renderOriginalSegment(seg) {
+      if (
+        sourceFile &&
+        sourceFile.type === 'image/jpeg' &&
+        seg.y === 0 &&
+        seg.width === previewImg.naturalWidth &&
+        seg.height === previewImg.naturalHeight
+      ) {
+        return sourceFile;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = seg.width;
+      canvas.height = seg.height;
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(
+        previewImg,
+        0, seg.y, seg.width, seg.height,
+        0, 0, seg.width, seg.height
+      );
+
+      return await canvasToBlob(canvas, 'image/jpeg', 1);
+    }
+
+    function makeCrcTable() {
+      const table = new Uint32Array(256);
+
+      for (let i = 0; i < 256; i++) {
+        let c = i;
+
+        for (let j = 0; j < 8; j++) {
+          c = ((c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1));
+        }
+
+        table[i] = c >>> 0;
+      }
+
+      return table;
+    }
+
+    const crcTable = makeCrcTable();
+
+    function crc32(data) {
+      let crc = 0xffffffff;
+
+      for (let i = 0; i < data.length; i++) {
+        crc = crcTable[(crc ^ data[i]) & 0xff] ^ (crc >>> 8);
+      }
+
+      return (crc ^ 0xffffffff) >>> 0;
+    }
+
+    function dosTimeDate(date = new Date()) {
+      const time = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+      const dosDate = ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+      return { time, date: dosDate };
+    }
+
+    function writeU16(view, offset, value) {
+      view.setUint16(offset, value, true);
+    }
+
+    function writeU32(view, offset, value) {
+      view.setUint32(offset, value, true);
+    }
+
+    async function createZip(files) {
+      const encoder = new TextEncoder();
+      const localParts = [];
+      const centralParts = [];
+      let offset = 0;
+      const stamp = dosTimeDate();
+
+      for (const file of files) {
+        const nameBytes = encoder.encode(file.name);
+        const data = new Uint8Array(await file.blob.arrayBuffer());
+        const crc = crc32(data);
+
+        const localHeader = new Uint8Array(30 + nameBytes.length);
+        const localView = new DataView(localHeader.buffer);
+
+        writeU32(localView, 0, 0x04034b50);
+        writeU16(localView, 4, 20);
+        writeU16(localView, 6, 0);
+        writeU16(localView, 8, 0);
+        writeU16(localView, 10, stamp.time);
+        writeU16(localView, 12, stamp.date);
+        writeU32(localView, 14, crc);
+        writeU32(localView, 18, data.length);
+        writeU32(localView, 22, data.length);
+        writeU16(localView, 26, nameBytes.length);
+        writeU16(localView, 28, 0);
+        localHeader.set(nameBytes, 30);
+        localParts.push(localHeader, data);
+
+        const centralHeader = new Uint8Array(46 + nameBytes.length);
+        const centralView = new DataView(centralHeader.buffer);
+
+        writeU32(centralView, 0, 0x02014b50);
+        writeU16(centralView, 4, 20);
+        writeU16(centralView, 6, 20);
+        writeU16(centralView, 8, 0);
+        writeU16(centralView, 10, 0);
+        writeU16(centralView, 12, stamp.time);
+        writeU16(centralView, 14, stamp.date);
+        writeU32(centralView, 16, crc);
+        writeU32(centralView, 20, data.length);
+        writeU32(centralView, 24, data.length);
+        writeU16(centralView, 28, nameBytes.length);
+        writeU16(centralView, 30, 0);
+        writeU16(centralView, 32, 0);
+        writeU16(centralView, 34, 0);
+        writeU16(centralView, 36, 0);
+        writeU32(centralView, 38, 0);
+        writeU32(centralView, 42, offset);
+        centralHeader.set(nameBytes, 46);
+        centralParts.push(centralHeader);
+
+        offset += localHeader.length + data.length;
+      }
+
+      const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+      const endHeader = new Uint8Array(22);
+      const endView = new DataView(endHeader.buffer);
+
+      writeU32(endView, 0, 0x06054b50);
+      writeU16(endView, 4, 0);
+      writeU16(endView, 6, 0);
+      writeU16(endView, 8, files.length);
+      writeU16(endView, 10, files.length);
+      writeU32(endView, 12, centralSize);
+      writeU32(endView, 16, offset);
+      writeU16(endView, 20, 0);
+
+      return new Blob([...localParts, ...centralParts, endHeader], { type: 'application/zip' });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function setProgress(current, total, text) {
+      const pct = total ? Math.round(current / total * 100) : 0;
+      progressWrap.style.display = 'block';
+      progressText.textContent = text || '处理中...';
+      progressPercent.textContent = `${pct}%`;
+      progressBar.style.width = `${pct}%`;
+    }
+
+    exportOriginalBtn.addEventListener('click', async () => {
+      if (!imgReady) {
+        showToast('请先上传详情图');
+        return;
+      }
+
+      const segments = getSegments();
+
+      if (!segments.length) return;
+
+      exportOriginalBtn.disabled = true;
+      exportBtn.disabled = true;
+      autoSplitBtn.disabled = true;
+      undoBtn.disabled = true;
+      clearBtn.disabled = true;
+      progressWrap.style.display = 'none';
+
+      try {
+        const files = [];
+
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
+          setProgress(i, segments.length, `处理第 ${i + 1} / ${segments.length} 张`);
+          await new Promise(resolve => setTimeout(resolve, 20));
+
+          const blob = await renderOriginalSegment(seg);
+
+          files.push({
+            name: `slice_${pad2(seg.index)}.jpg`,
+            blob
+          });
+        }
+
+        setProgress(segments.length, segments.length, '打包 ZIP');
+        const zipBlob = await createZip(files);
+        const baseName = sourceFile ? sourceFile.name.replace(/\.[^.]+$/, '') : 'detail';
+        downloadBlob(zipBlob, `${baseName}_original_slices.zip`);
+        showToast('原图切片导出完成');
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || '导出失败，请换一张图后重试');
+      } finally {
+        exportOriginalBtn.disabled = false;
+        exportBtn.disabled = false;
+        autoSplitBtn.disabled = false;
+        undoBtn.disabled = false;
+        clearBtn.disabled = false;
+      }
+    });
+
+    exportBtn.addEventListener('click', async () => {
+      if (!imgReady) {
+        showToast('请先上传详情图');
+        return;
+      }
+
+      const maxBytes = 195 * 1024;
+      const type = 'image/jpeg';
+      const ext = 'jpg';
+      const segments = getSegments();
+
+      if (!segments.length) return;
+
+      exportBtn.disabled = true;
+      exportOriginalBtn.disabled = true;
+      autoSplitBtn.disabled = true;
+      undoBtn.disabled = true;
+      clearBtn.disabled = true;
+      lastExportInfo.clear();
+      renderSliceList();
+
+      try {
+        const files = [];
+        let oversizeCount = 0;
+
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
+          setProgress(i, segments.length, `处理第 ${i + 1} / ${segments.length} 张`);
+          await new Promise(resolve => setTimeout(resolve, 20));
+
+          const result = await compressSegment(seg, type, maxBytes);
+
+          if (!result.ok) oversizeCount++;
+
+          lastExportInfo.set(seg.index, {
+            ok: result.ok,
+            size: result.blob.size,
+            quality: result.quality
+          });
+
+          files.push({
+            name: `slice_${pad2(seg.index)}.${ext}`,
+            blob: result.blob
+          });
+
+          renderSliceList();
+        }
+
+        setProgress(segments.length, segments.length, '打包 ZIP');
+        const zipBlob = await createZip(files);
+        const baseName = sourceFile ? sourceFile.name.replace(/\.[^.]+$/, '') : 'detail';
+        downloadBlob(zipBlob, `${baseName}_slices.zip`);
+
+        if (oversizeCount > 0) {
+          showToast(`已导出，但有 ${oversizeCount} 张仍超过目标大小，建议把这些切片切短一点`);
+        } else {
+          showToast('导出完成：所有切片均已压缩到目标大小以内');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || '导出失败，请减少单张切片高度后重试');
+      } finally {
+        exportBtn.disabled = false;
+        exportOriginalBtn.disabled = false;
+        autoSplitBtn.disabled = false;
+        undoBtn.disabled = false;
+        clearBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
